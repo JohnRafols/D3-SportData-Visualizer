@@ -1,0 +1,782 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<head>
+<link rel="stylesheet" type="text/css" href="styles.css">
+
+<meta charset="UTF-8">
+ <meta charset='utf-8'>
+   <meta http-equiv="X-UA-Compatible" content="IE=edge">
+   <meta name="viewport" content="width=device-width, initial-scale=1">
+   <link rel="stylesheet" type="text/css" href="styles.css">
+   <script src="http://code.jquery.com/jquery-latest.min.js" type="text/javascript"></script>
+   <script src="script.js"></script>
+   <title>Team Rivalries</title>
+
+
+</head>
+<style>
+@import url("http://fonts.googleapis.com/css?family=Lato:300,400,700,900");
+@import url(http://fonts.googleapis.com/css?family=Pacifico);
+
+
+.arc path {
+  stroke: #fff;
+}
+
+
+
+path:hover{
+opacity:0.4;
+}
+
+path{
+opacity:0.60;
+}
+
+
+#teamlabel{
+	float:left;
+	margin: .06%;
+	margin-right: .5%;
+}
+
+.d3-tip {
+  line-height: 1;
+  font-weight: bold;
+  padding: 12px;
+  background: rgba(0, 0, 0, 0.8);
+  color: #fff;
+  border-radius: 2px;
+}
+
+/* Creates a small triangle extender for the tooltip 
+.d3-tip:after {
+  box-sizing: border-box;
+  display: inline;
+  font-size: 10px;
+  width: 100%;
+  line-height: 1;
+  color: rgba(0, 0, 0, 0.8);
+  content: "\25BC";
+  position: absolute;
+  text-align: center;
+}
+*/
+
+/* Style northward tooltips differently */
+.d3-tip.n:after {
+  margin: -1px 0 0 0;
+  top: 100%;
+  left: 0;
+}
+
+</style>
+
+
+
+<div id='cssmenu'>
+<ul>
+   <li><a href = "index.html"><span>Home</span></a></li>
+   <li><a href= "ScatterGraph.html"><span>Scatter Graph</span></a></li>
+   <li><a href= "Overall Seasonal Data.html"><span>Bar Chart</span></a></li>
+   <li class='active'><a href="Team Rivalries.html"><span>Rivalries</span></a></li>
+</ul>
+</div>
+
+
+
+<body>
+<title>Team Rivalries</title>
+<H1 style = "font-family: Verdana">Team Rivalries</H1>
+	
+<script src="http://d3js.org/d3.v3.min.js"></script>
+<script src="http://labratrevenge.com/d3-tip/javascripts/d3.tip.v0.6.3.js"></script>
+
+
+	<div>
+		<span id="teamLabel">Your team:</span>
+		<select class="dropdown">
+		</select>
+	</div>
+
+	
+	
+	
+	
+	<div id="pieChartId" style="display :inline-block">
+	</div>
+			
+	
+
+
+<script>
+var teamCount=10;
+
+var getTeamSelectedOnDropDown=function(){
+	var dd=document.getElementsByClassName("dropdown")[0];
+	var team=dd.options[dd.selectedIndex].value;
+	return team;
+};
+
+	/*
+	function add(teamName){		
+		var i;
+		for(i=0; i<teams.length; i++){
+			if(teams[i]!=undefined && teams[i].localeCompare(teamName)==0){
+				return;
+			}
+		}
+		teams[i]=teamName;
+	}
+	
+	*/
+	function rivalWon(text){
+		if(text.length>4 && text.substring(0,4)=="draw"){
+		  return false;
+		}
+		
+		if(text=="" || text==" " || text=="undefined"){
+		  return false;
+		}
+				
+		var i=text.indexOf('–');
+		if(i==-1){
+		  return false;
+		}					
+			    
+		var homeTeamScore=parseInt(text.substring(0, i), 10);
+		var awayTeamScore=parseInt(text.substring(i+1, text.length), 10);;
+
+		return awayTeamScore>homeTeamScore;
+			
+		
+	}
+	
+	//if the team is homeTeam or awayTeam
+	var homeOrAway=function(team, homeTeam, awayTeam){
+		if(team==homeTeam) return "home";
+		else if(team==awayTeam) return "away";
+		else return "neither";
+	}
+	
+	var containsBothTeams=function(el, data){
+		return (el["Home Team"]==data["Home Team"] && el["Away Team"]==data["Away Team"]) ||
+		(el["Home Team"]==data["Away Team"] && el["Away Team"]==data["Home Team"]);
+	}
+	
+	var addToArray=function(data, array, team){
+		var isHomeOrAway=homeOrAway(team, data["Home Team"], data["Away Team"]);
+		if(isHomeOrAway=="neither"){
+			return;
+		}
+		if(!data["Date"].startsWith("BYES")){
+
+		
+		for(var i=0;i<array.length;i++){
+		    var el=array[i];		  
+			  if(el!=undefined && containsBothTeams(el, data)){ 
+				  var isIt=homeOrAway(team, el["Home Team"], el["Away Team"]);
+				  if(isHomeOrAway=="home"){
+					  var index=el.Score.indexOf("/");
+					  var rivalScore=parseInt(el.Score.substring(0, index));
+					  rivalScore+=(rivalWon(data.Score) ? 1 : 0);
+					  var homeScore=parseInt(el.Score.substring(index+1, el.Score.length));
+					  homeScore+=1;
+					  el.Score=rivalScore+"/"+homeScore;
+					  return;
+				  }else if(isHomeOrAway=="away"){
+					  var index=el.Score.indexOf("/");
+					  var rivalScore=parseInt(el.Score.substring(0, index));
+					  rivalScore+=(rivalWon(data.Score) ? 0 : 1);
+					  var homeScore=parseInt(el.Score.substring(index+1, el.Score.length));
+					  homeScore+=1;
+					  el.Score=rivalScore+"/"+homeScore;
+					  return;
+				  }									
+			  }
+		  }
+		  for(var i=0;i<array.length;i++){
+			  if(typeof array[i]=='undefined'){
+				  if(isHomeOrAway=="home"){
+					  data.Score=rivalWon(data.Score) ? "1/1" : "0/1";
+				  }else if(isHomeOrAway=="away"){
+					  data.Score=rivalWon(data.Score) ? "0/1" : "1/1";					
+				  }
+				  array[i]=data;
+				  return;
+			  }
+		  }
+		}
+	}
+
+
+	var array=new Array(teamCount-1);
+	var count=0;
+	var updatePieChart=function(){ 
+		array=new Array(teamCount-1);
+		count=0;
+		var dd=document.getElementsByClassName("dropdown")[0];
+		var team=dd.options[dd.selectedIndex].value;
+			
+		
+		d3.csv("ANZChampionshipResults/years.csv", function(error, data) {
+			data.forEach(function(d) {   
+				d3.csv("ANZChampionshipResults/"+d.year+"-Table1.csv", function(error, data) {
+					data.forEach(function(dd){
+					if(!dd["Date"].startsWith("BYES")){
+					  
+						  addToArray(dd, array, team);						
+					 
+					}
+					});
+					
+					count++;
+					if(count==6){
+					    array=removeWeakTeams(array);
+					    draw(array);	
+					}
+					console.log(count);
+				});
+			});		
+		});		
+	}
+	
+	var removeWeakTeams=function(array){
+		for(var i=0;i<array.length;i++){			
+			var team=array[i];
+			var index=team.Score.indexOf("/");
+			var gamesWon=parseInt(team.Score.substring(0, index));
+			var gamesPlayed=parseInt(team.Score.substring(index+1, team.Score.length));			
+			if(gamesWon/gamesPlayed<0.25){
+				array[i]=undefined;
+			}
+		}
+		
+		var count=0;
+		for(var i=0;i<array.length;i++){			
+			if(array[i]!=undefined){
+				count++;
+			}
+		}
+		var tempArray=new Array(count);
+		var j=0;
+		for(var i=0;i<array.length;i++){			
+			if(array[i]!=undefined){
+				tempArray[j]=array[i];
+				j++;
+			}
+		}
+		return tempArray;
+	};
+	
+
+function populateDropDownList(file){
+	var teams2=new Array(10);
+	d3.csv(file, function(error, data){
+		data.forEach(function(d){
+			var team=d["Home Team"];
+			if(teams2.indexOf(team)==-1){
+				teams2.push(team);
+				dropdown.append("option").text(team);					
+			}
+		});		
+		
+		if(listInitialised==false){
+			var dd=document.getElementsByClassName("dropdown")[0];
+			console.log("selectedTeam: "+dd.options[dd.selectedIndex].value);
+			updatePieChart();
+			listInitialised=true;
+		}
+	});	
+}
+	
+</script>
+<script>
+
+var listInitialised=false;
+var onchange=function(){
+	d3.csv("ANZChampionshipResults/years.csv", function(error, data) {
+		  if(!listInitialised){
+		    populateDropDownList("ANZChampionshipResults/"+data[0].year+"-Table1.csv");
+		  }else{
+			var dd=document.getElementsByClassName("dropdown")[0];
+			var selectedTeam=dd.options[dd.selectedIndex].value;
+			console.log("selectedTeam: "+selectedTeam);
+			updatePieChart();
+		  }
+		  console.log(listInitialised);
+	});	
+}
+
+var dropdown=d3.select(".dropdown");
+dropdown.attr("onchange", onchange());
+
+</script>
+
+<script>
+
+				
+
+	var width = 800,
+		height = 700,
+		radius = Math.min(width, height) / 2;
+
+	var color = d3.scale.linear()
+	//	.range(["pink", "cornflowerblue", "lightgreen", "lightyellow", "orange", 
+	//              "tomato", "darkred", "darkblue", "darkgreen", "sienna", "darkred"]);
+	//	.range(["darkred", "darkgreen"]);
+	.range(["green", "red"]);
+	
+	var arc = d3.svg.arc()
+		.outerRadius(radius - 10)
+		.innerRadius(0);
+
+	var getPieArc=function(d){
+		var index=d.Score.indexOf("/");
+		var score=parseInt(d.Score.substring(0, index));
+		var total=parseInt(d.Score.substring(index+1, d.Score.length));
+		return score/total;
+	}
+	
+	var pie = d3.layout.pie()
+		.sort(null)
+		.value(function(d) { return getPieArc(d); });
+/*
+		var svg = d3.select("body").append("svg")
+		.attr("width", width)
+		.attr("height", height)
+		.attr("x", 0)
+		.attr("y",40)
+		.attr("id", "svgId")
+		.append("g")
+		.attr("transform", "translate(" + 300 + "," + height / 2 + ")");
+*/
+/*
+	var svg = d3.select("body").append("svg")
+		.attr("width", width)
+		.attr("height", height)	
+		.attr("id", "svgId");
+		*/
+
+		var svg=d3.select("body").select("#pieChartId").append("svg")
+		.attr("id", "svgId").attr("width", width).attr("height", height+150);
+		
+
+	var tip = d3.tip()
+	.attr('class', 'd3-tip')
+	.offset([80,-10])
+	.html(function(d) {
+		var score=d.data.Score;			
+		var index=score.indexOf("/");
+		var gamesWon=parseInt(score.substring(0, index));
+		var gamesPlayed=parseInt(score.substring(index+1, score.length));		
+		score=(gamesWon/gamesPlayed*100);
+		var home=d.data["Home Team"].substring(d.data["Home Team"].lastIndexOf(" ")+1, d.data["Home Team"].length);
+		var away=d.data["Away Team"].substring(d.data["Away Team"].lastIndexOf(" ")+1, d.data["Away Team"].length);
+		var scoreInStr="<span style=\'color:lightblue\'> Stats</span></br>";
+		scoreInStr+="<span style=\"color:lightgreen\">";
+		if(homeOrAway(getTeamSelectedOnDropDown(), d.data["Home Team"], d.data["Away Team"])=="home"){			
+			scoreInStr+=home+"</span> vs <span style=\"color:red\">";
+			scoreInStr+=away+"</span>";
+			scoreInStr+="</br>Played <span style=\'color:lightblue\'>"+gamesPlayed
+					+" games</span></br><span style=\"color:red\">"+away
+					+"</span> won <span style=\'color:lightblue\'>"+gamesWon+" games</span>";
+		}else{
+			scoreInStr+=away+"</span> vs <span style=\"color:red\">";
+			scoreInStr+=home+"</span>";
+			scoreInStr+="</br>Played <span style=\'color:lightblue\'>"+gamesPlayed
+					+" games</span></br><span style=\"color:red\">"+home
+					+"</span> won <span style=\'color:lightblue\'>"+gamesWon+" games</span>";
+		}
+		
+		
+		return scoreInStr;
+  })
+	svg.call(tip);
+
+	
+	  var colors = ["pink", "cornflowerblue", "lightgreen", "lightyellow", "orange", 
+			"tomato", "darkred", "darkblue", "darkgreen", "sienna", "darkred"];
+
+
+
+	var getColorDomain=function(array){
+		var minn=200.0;
+		var maxx=1.0;
+		for(var i=0;i<array.length;i++){
+			var score=array[i].Score;			
+			var index=score.indexOf("/");
+			var gamesWon=parseInt(score.substring(0, index));
+			var gamesPlayed=parseInt(score.substring(index+1, score.length));		
+			score=(gamesWon/gamesPlayed*100);
+			if(score<minn){
+				minn=score;
+			}
+			if(score>maxx){
+				maxx=score;
+			}
+		}	
+		console.log("min: "+minn);
+		console.log("max: "+maxx);
+		console.log([minn,maxx]);
+		return [minn,maxx];
+	};
+		
+  var draw=function(array){
+  
+	var domain=getColorDomain(array);
+	color.domain(domain);
+  
+  
+		d3.select("#svgId").remove();
+		svg=d3.select("body").select("#pieChartId").append("svg")
+		.attr("id", "svgId").attr("width", width).attr("height", height+150)
+		.append("g")
+		.attr("transform", "translate(" + width / 2.3 + "," + height /1.7 + ")");
+	console.log(array);
+    var g = svg.selectAll(".arc")
+	.data(pie(array))
+      .enter().append("g")
+	.attr("class", "arc");
+
+
+	
+	var dd=document.getElementsByClassName("dropdown")[0];
+	var selectedTeam=dd.options[dd.selectedIndex].value;
+	d3.select("#svgId").append("text").text("Rivals of "+selectedTeam+" (with at least 25% win rate)")
+	.attr("x", (width/2)*0.35).attr("y", 50).style("font-weight", "bold");
+	
+    g.append("path")
+	.attr("d", arc)
+	.style("fill", function(d, i){
+	    var score=d.data.Score;
+		var index=score.indexOf("/");
+		var gamesWon=parseInt(score.substring(0, index));
+		var gamesPlayed=parseInt(score.substring(index+1, score.length));		
+		score=(gamesWon/gamesPlayed*100);  
+		return color(score);
+	    })
+	.on('mouseover', tip.show)
+    .on('mouseout', tip.hide);
+
+
+	
+
+	    
+	    
+	    
+	    var countC=0;
+	    countC=0;
+	    g.append("text")
+		.attr("transform", function(d) { return "translate(" + arc.centroid(d) + ")"; })
+		.attr("dy", ".35em")
+		.style("text-anchor", "middle")
+		.style("font-size", "12px")
+		.text(function(d) { 
+			var dd=document.getElementsByClassName("dropdown")[0];
+			var selectedTeam=dd.options[dd.selectedIndex].value;
+			
+			  console.log(d);
+			   if(countC!=teamCount-1){
+			    countC++;			
+			    console.log(countC);
+			    if(selectedTeam==d.data["Home Team"]){
+				    var awayTeam=d.data["Away Team"];
+				    var index=awayTeam.lastIndexOf(" ");
+				    var teamName=awayTeam.substring(index+1, awayTeam.length);				
+				    var score=d.data.Score;
+					var index=score.indexOf("/");
+					var gamesWon=parseInt(score.substring(0, index));
+					var gamesPlayed=parseInt(score.substring(index+1, score.length));		
+					score=(gamesWon/gamesPlayed*100).toFixed(0)
+				    return teamName+": "+score+"%";	
+			    }else{
+				    var homeTeam=d.data["Home Team"];
+				    var index=homeTeam.lastIndexOf(" ");
+				    var teamName=homeTeam.substring(index+1, homeTeam.length);
+					var score=d.data.Score;
+					var index=score.indexOf("/");
+					var gamesWon=parseInt(score.substring(0, index));
+					var gamesPlayed=parseInt(score.substring(index+1, score.length));		
+					score=(gamesWon/gamesPlayed*100).toFixed(0);
+				    return teamName+": "+score+"%";			
+			    }
+			  }else{
+			    return " ";
+			  }
+			  
+		});
+	 
+
+}
+
+addButtons();
+	var buttonCanvas
+	function addButtons(){
+			buttonCanvas= d3.select("body")			
+			.append("svg")
+			.style("display", "inline-block")
+			.style("vertical-align", "700%")
+			.attr("y", 0)
+			.attr("width", 400)
+			.attr("height", 600);
+			
+		
+
+	  var buttons;
+				console.log("Adding Buttons");
+					//In here, we add buttons into buttonsCanvas to control the visualization data:					
+					 buttons = [
+									{
+										"name": "All of NZ Teams",
+										"function":"drawCountry(0)",
+										"logo": "Logos/nz.jpg",
+										"logoSelected": "LogosSelected/nz.jpg"
+
+									},
+				         			 {
+					                	"name": "Central Pulse",
+					                	"function":"addTeam(1)",
+										"logo": "Logos/nz1.jpg",
+										"logoSelected": "LogosSelected/nz1.jpg"
+
+					                 },
+					                 {
+						                	"name": "Northern Mystics",
+						                	"function":"addTeam(2)",
+											"logo": "Logos/nz2.jpg",
+												"logoSelected": "LogosSelected/nz2.jpg"
+
+						             },
+						             {
+						                	"name": "Waikato Bay of Plenty Magic",
+						                	"function":"addTeam(3)",
+											"logo": "Logos/nz3.jpg",
+												"logoSelected": "LogosSelected/nz3.jpg"
+
+						             },
+						             {
+							               	"name": "Southern Steel",
+							               	"function":"addTeam(4)",
+											"logo": "Logos/nz4.jpg",
+												"logoSelected": "LogosSelected/nz4.jpg"
+
+						             },
+						             {
+						                	"name": "Canterbury Tactix",
+						                	"function":"addTeam(5)",
+											"logo": "Logos/nz5.jpg",
+												"logoSelected": "LogosSelected/nz5.jpg"
+
+					                 },
+					                 {
+					                	"name": "All of Austrailia teams",
+					                	"function":"drawCountry(1)",
+										"logo": "Logos/aus.jpg",
+											"logoSelected": "LogosSelected/aus.jpg"
+
+				         	        },					                 					                 
+		  			                 {
+						                	"name": "New South Wales Swifts",
+						                	"function":"addTeam(6)",
+												"logo": "Logos/aus1.jpg",
+													"logoSelected": "LogosSelected/aus1.jpg"
+
+						             },
+						             {
+						                	"name": "Adelaide Thunderbirds",
+						                	"function":"addTeam(7)",
+												"logo": "Logos/aus2.jpg",
+												"logoSelected": "LogosSelected/aus2.jpg"
+
+												
+						             },
+						             {
+						                	"name": "Melbourne Vixens",
+						                	"function":"addTeam(8)",
+											"logo": "Logos/aus3.jpg",
+												"logoSelected": "LogosSelected/aus3.jpg"
+
+						             },
+						             {
+							               	"name": "West Coast Fever",
+							               	"function":"addTeam(9)",
+											"logo": "Logos/aus4.jpg",
+											"logoSelected": "LogosSelected/aus4.jpg"
+
+						             },
+						             {
+						                	"name": "Queensland Firebirds",
+						                	"function":"addTeam(10)",
+											"logo": "Logos/aus5.jpg",
+												"logoSelected": "LogosSelected/aus5.jpg"
+
+					                 }
+				                 ];
+				  
+
+					var buttonGroup = buttonCanvas.append("g");
+														
+					//This appends the images or logos
+					buttonGroup.selectAll("image")
+							.data(buttons)
+							.enter()
+								.append("svg:image")
+								.attr("id", function(d,i){
+										return ("logo" + i)
+									})
+								.attr("x", function(d,i){									
+									if(i<6){
+										return 50;										
+									}
+									else return 200;
+								})
+								.attr("y", function(d,i){
+									if(i<6){
+										return i*100
+									}
+										return (i-6)*100								
+									}
+								)
+								.attr("xlink:href", function(d,i){return d.logo}								)
+								.attr("width", 100)
+								.attr("height", 100)	
+								.on("mouseover", function(d,i){
+									buttonGroup
+											.append("svg:title")
+											.attr("id", "logoHoverName")
+				  						    .text(function(x,y) {
+				  								return d.name
+				  							})										
+									})
+								.on("mouseout", function(d,i){
+									d3.select("#logoHoverName").remove();
+								})	
+								
+
+								
+					//This appends the buttons 
+					buttonGroup.selectAll("rect")
+							.data(buttons)
+							.enter()
+								.append("rect")
+								.attr("id", function(d,i){
+									return("button"+i)
+									}
+								)
+								.attr("x", function(d,i){									
+									if(i<6){
+										return 0;										
+									}
+									else return 150;
+								})
+								.attr("y", function(d,i){
+									if(i<6){
+										return i*100
+									}
+										return (i-6)*100								
+									}
+								)
+								.attr("stroke", "black")
+								.attr("width", 50)
+								.attr("height", 100)							
+								.attr("fill", function(d, i){ 
+										if(i == 0 || i == 6){ 
+											return "black"
+										}
+										else if(i<6){
+											return colors[i-1]
+										}
+										else{
+											return colors[i-2]
+										}
+									} 
+								)
+								.on("mouseover", function(d){
+									d3.select(this).transition().attr("fill", "whitesmoke");									
+									buttonGroup
+											.append("svg:title")
+											.attr("id", "buttonHoverName")
+				  						    .text(function(x,y) {
+				  								return "Color for: " + d.name
+				  							})	
+									
+									
+									})
+								.on("mouseout", function(d,i){
+									d3.select("#buttonHoverName").remove();						
+									d3.select(this).transition().attr("fill", function(d){
+										//0 and 5 are not part
+										if(i == 0 || i == 6){ 
+											return "black"
+										}
+										else if(i<6){
+											return colors[i-1]
+										}
+										else{
+											return colors[i-2]
+										}
+										}																	
+									)
+								})	
+								.on("mousedown", function(d,i){ 
+									d3.select(this).transition().attr("fill", "darkgray");
+									//changeLogo(i);
+									//This calls out a function
+									//return eval(d.function)
+								})	
+					
+								//Changes the logo appearance if it was clicked or not								
+								function changeLogo(index){
+										var one = buttons[index].logo;
+										var two = buttons[index].logoSelected;
+										if(d3.select("#logo" + index).attr("xlink:href") == one){
+											d3.select("#logo" + index).attr("xlink:href", two)						
+										}
+										else{
+											d3.select("#logo" + index).attr("xlink:href", one)						
+										}						
+								}
+					
+				}
+				
+</script>
+
+
+
+	 <div class="row" style = "font-family: Verdana">
+        <hr>
+        <div class="large-8 columns">
+          <h3>About:</h3>
+          <p>
+          
+          This is a Pie Chart showcasing Team Rivalries      
+                    
+          </p>
+        </div>
+   
+      </div>
+
+
+
+
+      <div class="row" style = "font-family: Verdana">
+        <div class="large-12 columns">
+          <hr>
+          <h3>Creator of Page:</h3>
+          <div class="large-4 columns">
+          </div>
+          <div class="large-4 columns">
+            Peide Amon Ng
+          </div>
+          <div class="large-4 columns">
+            ID #300280258
+          </div>
+        </div>
+      </div>
+
+
+
+
+</body>
+</html>

@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html>
+<head>
+
+<meta charset="UTF-8">
+ <meta charset='utf-8'>
+   <meta http-equiv="X-UA-Compatible" content="IE=edge">
+   <meta name="author" content="Ryan Ebue - 300258455">
+   <script src="http://code.jquery.com/jquery-latest.min.js" type="text/javascript"></script>
+
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<meta content="text/html;charset=utf-8" http-equiv="Content-Type">
+	<meta content="utf-8" http-equiv="encoding">
+	<script src="http://d3js.org/d3.v3.min.js" charset="utf-8"></script>
+	<script src="http://dimplejs.org/dist/dimple.v2.0.0.min.js"></script>
+	<link rel="stylesheet" type="text/css" href="styles.css">
+
+   <script src="script.js"></script>
+   
+   <title>Overall Seasonal Data</title>
+	
+	
+</head>
+<body>
+
+
+<div id='cssmenu'>
+<ul>
+   <li><a href = "index.html"><span>Home</span></a></li>
+   <li><a href= "ScatterGraph.html"><span>Scatter Graph</span></a></li>
+   <li class='active'><a href= "Overall Seasonal Data.html"><span>Bar Chart</span></a></li>
+   <li class='last'><a href="Team Rivalries.html"><span>Rivalries</span></a></li>
+</ul>
+</div>
+
+
+<title>Overall Seasonal Data</title>
+	<H1 style = "font-family: Verdana">Overall Seasonal Data</H1>
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	<p></p>
+	<div class = "logoDisplay">
+	  <table id = "teamLogos" width="200" border="1" style = "visibility: hidden;">
+	    <tr>
+	      <td><img src="Logos/nz1.jpg" width="100" height="76" alt="Pulse"></td>
+	      <td><img src="Logos/aus1.jpg" width="100" height="76" alt="Swifts"></td>
+        </tr>
+	    <tr>
+	      <td><img src="Logos/nz2.jpg" width="100" height="76" alt="Mystics"></td>
+	      <td><img src="Logos/aus2.jpg" width="100" height="76" alt="Thunderbirds"></td>
+        </tr>
+	    <tr>
+	      <td><img src="Logos/nz3.jpg" width="100" height="76" alt="Magic"></td>
+	      <td><img src="Logos/aus3.jpg" width="100" height="76" alt="Vixens"></td>
+        </tr>
+	    <tr>
+	      <td><img src="Logos/nz4.jpg" width="100" height="76" alt="Southern Steel"></td>
+	      <td><img src="Logos/aus4.jpg" width="100" height="76" alt="Fever"></td>
+        </tr>
+	    <tr>
+	      <td><img src="Logos/nz5.jpg" width="100" height="76" alt="Tactix"></td>
+	      <td><img src="Logos/aus5.jpg" width="100" height="76" alt="Firebirds"></td>
+        </tr>
+      </table>
+      <div id = "showDiv" style = "visibility: hidden;">
+            <input class="hideButton" name="Show/Hide Team Logos" 
+            	alt="Show/Hide Team Logos" 
+				type="button" 
+				value="Hide" 
+				onclick="hideLogos()"
+			/>
+		</div>
+     </div>
+
+	<div id="leagueChart">
+
+		<div>
+			<div data-role="main" class="ui-content">
+			    <label for=fader>Year</label>
+				<input type=range min=2008 max=2013 id=fader step=1 oninput="outputUpdate(value)" onclick="displayFile(value)" onchange="displayFile(value)"></input>
+				<output for=fader id=year></output>
+				<script>
+					function outputUpdate(year) {
+					document.querySelector('#year').value = year;
+					}
+				</script>
+			 </div>
+		</div>
+		<div class="divSpacing">
+	    	<a href="#leagueChart">
+	    	<input class="myButton" name="Regular" 
+				type="button" 
+				value="Regular Season" 
+				onclick="partOfSeason(name)" 
+			/>
+			<input class="myButton" name="Early" 
+				type="button" 
+				value="Early Season" 
+				onclick="partOfSeason(name)" 
+			/>
+			<input class="myButton" name="Mid" 
+				type="button" 
+				value="Mid Season" 
+				onclick="partOfSeason(name)" 
+			/>
+			<input class="myButton" name="End" 
+				type="button" 
+				value="Season End" 
+				onclick="partOfSeason(name)" 
+			/>
+			<input class="myButton" name="Full" 
+				type="button" 
+				value="Full Season" 
+				onclick="partOfSeason(name)" 
+			/>
+			<input class="myButton" name="Finals" 
+				type="button" 
+				value="The Finals" 
+				onclick="partOfSeason(name)" 
+			/>
+			
+			<br>
+			<input class="myButton" name="NZ" 
+				type="button" 
+				value="New Zealand Teams" 
+				onclick="partOfSeason(name)" 
+			/>
+			<input class="myButton" name="AUS" 
+				type="button" 
+				value="Australian Teams" 
+				onclick="partOfSeason(name)" 
+			/>
+			<input class="myButton" name="Home" 
+				type="button" 
+				value="Home Games" 
+				onclick="partOfSeason(name)" 
+			/>
+			<input class="myButton" name="Away" 
+				type="button" 
+				value="Away Games" 
+				onclick="partOfSeason(name)" 
+			/>
+			</a>
+	    </div>
+
+
+		
+		<script type="text/javascript" id="ryan.html">
+
+		var svg;
+	    var svgChart;
+	    var homeAway = "Home Team";
+	    var country = "Australia";
+	    var part = "Full Season" ;
+	    var currentFile  = "ANZChampionshipResults/Bar Chart CSVs/2008-Table1.csv";
+	    var currentYear ="2008";
+	    
+
+	    var newZealandTeams = ["Central Pulse", "Northern Mystics", 
+		                       "Waikato Bay of Plenty Magic", "Southern Steel", "Canterbury Tactix"];
+		var austrailianTeams = ["New South Wales Swifts", "Adelaide Thunderbirds", "Melbourne Vixens",
+		                        "West Coast Fever", "Queensland Firebirds"];
+		var validTeams = newZealandTeams.concat(austrailianTeams);
+		var colors = ["red", "blue", "green", "yellow", "orange", 
+		              "purple", "darkred", "darkblue", "darkgreen", "grey"];
+
+		function displayFile(file){
+		    var fileList=document.getElementById("fileList");
+		    currentFile = "ANZChampionshipResults/Bar Chart CSVs/"+ file + "-Table1.csv";
+		    currentYear = file;
+		    displayBySeasonPart(currentFile,currentYear);
+	    	
+	    }
+
+	    function partOfSeason(newPart){
+	    	part = newPart;
+	    	displayBySeasonPart(currentFile, currentYear);
+	    }
+
+	    function displayBySeasonPart(file,year){
+	    	displayLogoTable();
+		    currentFile = file;
+		    currentYear = year;
+		    var dataFromFile = file;
+		    var data = [];
+
+		    var regular = [];
+		    var early = [];
+		    var mid = [];
+		    var end = [];
+		    var fin = [];
+		    var full = [];
+		    
+		    var nz = [];
+		    var aus = [];
+
+		    var homeGames = [];
+		    var awayGames = [];
+
+		    var homeTeam = {};
+		    var awayTeam = {};
+		    var homeWin = 0;
+		    var awayWin = 0;
+
+		    var svgChart;
+		      d3.csv(dataFromFile, function (data) { 
+
+			      data.forEach(function (d) {
+			      	
+			      	if(!d["Date"].startsWith("BYES")){
+				      d["Home Team Score"] = +d["Score"].split('-')[0];
+				      d["Away Team Score"] = +d["Score"].split('-')[1];
+				      
+				      if(d["Home Team Score"]-d["Away Team Score"]>0){homeWin=1}
+				      else{homeWin=0}
+				      
+				      if( d["Away Team Score"]-d["Home Team Score"]>0){awayWin=1}
+				      else{awayWin=0}
+				      
+				      homeTeam = { "Team": d["Home Team"],
+					      		"Score": d["Home Team Score"],
+					      		"Round": d["Round"],	
+					      		"Number of Wins" : homeWin
+				      } 
+				      
+		 		      awayTeam = { "Team": d["Away Team"],
+					      	    "Score": d["Away Team Score"],
+					            "Round": d["Round"],
+	  				      		"Number of Wins" : awayWin
+				      }
+
+				      //All teams in certain rounds
+				      if(d["Round"]>= 1 && d["Round"]<= 5){
+				      	early.push(homeTeam);
+				      	early.push(awayTeam);
+				      }
+				      else if(d["Round"]>= 6 && d["Round"]<= 10){
+						mid.push(homeTeam);
+				      	mid.push(awayTeam);
+				      }
+				      else if(d["Round"]>= 11 && d["Round"]<= 14){
+				      	end.push(homeTeam);
+				      	end.push(awayTeam);
+				      }
+				      else{ 
+					    fin.push(homeTeam);
+					    fin.push(awayTeam);
+				      }
+
+				      if(d["Round"]>=1 && d["Round"]<=14){
+					      regular.push(homeTeam);
+					      regular.push(awayTeam);
+				      }
+
+				      full.push(homeTeam);
+				      full.push(awayTeam);
+
+				      //Australian or New Zealand Teams
+				      if(newZealandTeams.indexOf(d["Home Team"]) != -1){
+				      	nz.push(homeTeam);
+				      	homeGames.push(homeTeam);
+				      }
+				      if(austrailianTeams.indexOf(d["Home Team"]) != -1){
+				      	aus.push(homeTeam);
+				      	homeGames.push(homeTeam);
+				      }
+				      if(newZealandTeams.indexOf(d["Away Team"]) != -1){
+				      	nz.push(awayTeam);
+				      	awayGames.push(awayTeam);
+				      }
+				      if(austrailianTeams.indexOf(d["Away Team"]) != -1){
+				      	aus.push(awayTeam);
+				      	awayGames.push(awayTeam);
+				      }
+
+				      //Home and Away Games
+
+			      }
+			  }, this);
+			       //display according part of the season
+			       if(part=="Regular"){data = regular} //regular
+			       else if(part=="NZ"){data = nz}
+			       else if(part=="AUS"){data = aus}
+			       else if(part=="Home"){data = homeGames}
+			       else if(part=="Away"){data = awayGames}
+			       else if (part=="Early"){data = early}
+	       			else if (part=="Mid"){data = mid}
+	       			else if (part=="End"){data = end}
+	       			else if (part=="Finals"){data = fin} //fin
+			       else{data = full}
+			       
+
+			      var svgWidth = 800; //900
+			  	  var svgHeight = 650; //650
+			      
+			      d3.select("svg").remove();// deleting previous
+			      svg = dimple.newSvg("#leagueChart", svgWidth, svgHeight); // creating new svg
+
+			      svgChart = new dimple.chart(svg, data);
+			      svgChart.setBounds(50, 60, 400,400)
+		      
+			      
+
+			      //bottom to top orientation
+			      var x = svgChart.addCategoryAxis("x", "Team");
+			      var y = svgChart.addMeasureAxis("y", "Number of Wins" );
+			      //left to right orientation
+			      //var x = svgChart.addMeasureAxis("x", "Number of Wins");
+			      //var y = svgChart.addCategoryAxis("y", "Team");
+
+			      var s = svgChart.addSeries("Team", dimple.plot.bar);
+			      s.addOrderRule("Team");
+			      s.lineMarkers = true;
+		      	
+			      var chartLegend = svgChart.addLegend(500,100,10,500);
+			      	chartLegend.fontSize = 16;
+			        svgChart.draw();
+			        svgChart.legends = [];
+			       	
+				      
+				      var text;
+	       		       		if(part=="Regular") {text = "for the Regular Season of "}
+	       		       		else if(part=="NZ"){text = "for the NZ Teams of "}
+			       			else if(part=="AUS"){text = "for the AUS Teams of "}
+			       			else if(part=="Home"){text = "for the Home Games of "}
+			       			else if(part=="Away"){text = "for the Away Games of "}
+	       		       	 	else if (part=="Finals"){text = "for the Finals of "}
+	   		       	 		else if (part=="Early"){text = "for the Early Season of "}
+		       	 			else if (part=="Mid"){text = "for the Mid Season of "}
+	       	 				else if (part=="End"){text = "for the Season End of "}
+	       		       	 	else{text = "for the Full Season of "}
+			      
+
+					     // title of the chart
+				             svg.selectAll("title_text")
+				               .data(["Number of Wins "+text+ year])
+				               .enter()
+				               .append("text")
+				                 .attr("x", 20)
+				                 .attr("y", function (d, i) { return 50 + i * 16; })
+				                 .style("font-family", "verdana")
+				                 .style("font-size", "28px")
+				                 .style("color", "Black")
+				                 .text(function (d) { return d; });
+
+				     
+						 // Get a unique list of Owner values to use when filtering
+						    var filterValues = validTeams;
+						    
+						         // Get all the rectangles from our now orphaned legend
+						    chartLegend.shapes.selectAll("rect")
+							.on("click", function (e) {
+							    // This indicates whether the item is already visible or not
+							   var hide = false;
+							   var newFilters = [];
+							   // If the filters contain the clicked shape hide it
+	      			          filterValues.forEach(function (f) {
+			                  if (f === e.aggField.slice(-1)[0]) {hide = true;} 
+							  else {newFilters.push(f);}
+							  });
+						  
+							  // Hide the shape or show it
+							  if (hide) {
+							  d3.select(this).style("opacity", 0.2);
+							  } else {
+							  newFilters.push(e.aggField.slice(-1)[0]);
+							  d3.select(this).style("opacity", 0.8);
+							  }
+							  // Update the filters
+							   filterValues = newFilters;
+							  // Filter the data
+							   svgChart.data = dimple.filterData(data, "Team", filterValues);
+							   //Override with duration to show animation
+							   svgChart.draw(800);
+
+		      			     });
+
+				     });	    
+	    	
+	    }
+
+	    function removeA(arr) {
+	    var what, a = arguments, L = a.length, ax;
+	    while (L > 1 && arr.length) {
+	        what = a[--L];
+	        while ((ax= arr.indexOf(what)) !== -1) {
+	            arr.splice(ax, 1);
+	        }
+	    }
+	    return arr;
+		}
+
+		function hideLogos() {
+			if(document.getElementById("teamLogos").style.visibility != "hidden"){
+				document.getElementById("teamLogos").style.visibility = "hidden"; 
+			}
+			else{
+				document.getElementById("teamLogos").style.visibility = "visible"; 
+
+			}
+		}
+
+		function displayLogoTable(){
+			document.getElementById("teamLogos").style.visibility = "visible"; 
+			document.getElementById("showDiv").style.visibility = "visible";
+		}
+
+	    </script>
+
+	</div>
+	
+      <script>
+		
+		
+	</script>
+	
+	
+	 <div class="row" style = "font-family: Verdana">
+        <hr>
+        <div class="large-8 columns">
+          <h3>About:</h3>
+          <p>
+          
+          This is a Bar Chart showing the overall scores earned by teams.</br>
+        -Different parts of the season can be viewed.</br>
+        -Compare Home and Away Games separately.</br>
+        -Compare Teams by their respective countries, New Zealand or Australia.</br>
+                    
+          </p>
+        </div>
+   
+      </div>
+
+
+
+
+      <div class="row" style = "font-family: Verdana">
+        <div class="large-12 columns">
+          <hr>
+          <h3>Creator of Page:</h3>
+          <div class="large-4 columns">
+          </div>
+          <div class="large-4 columns">
+            Ryan Ebue
+          </div>
+          <div class="large-4 columns">
+            ID# 300258455
+          </div>
+        </div>
+      </div>
+	
+	
+	
+</body>
+</html>
